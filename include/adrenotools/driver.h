@@ -21,6 +21,9 @@ extern "C" {
  */
 void *adrenotools_open_libvulkan(int dlopenMode, int featureFlags, const char *tmpLibDir, const char *hookLibDir, const char *customDriverDir, const char *customDriverName, const char *fileRedirectDir, adrenotools_gpu_mapping *nextGpuMapping);
 
+/** Load an Android custom Vulkan ICD directly in a namespace linked to the default system libraries. */
+void *adrenotools_open_custom_driver_direct(int dlopenMode, const char *customDriverDir, const char *customDriverName);
+
 /**
  * @brief Imports the given CPU mapped memory range into the GSL allocator. The out_mapping should have been passed to adrenotools_open_libvulkan with ADRENOTOOLS_DRIVER_GPU_MAPPING_IMPORT set in `featureFlags`. This should then be followed by a call to vkAllocateMemory with a matching size which will return a VkDeviceMemory view over the input region
  * @param outMapping Output mapping pointer, the same as was passed to adrenotools_open_libvulkan

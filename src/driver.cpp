@@ -15,6 +15,29 @@
 #include <adrenotools/driver.h>
 #include <unistd.h>
 
+void *adrenotools_open_custom_driver_direct(int dlopenFlags, const char *customDriverDir, const char *customDriverName) {
+    if (!linkernsbypass_load_status() || !customDriverDir || !customDriverName)
+        return nullptr;
+
+    const std::string path{std::string(customDriverDir) + customDriverName};
+    struct stat st{};
+    if (stat(path.c_str(), &st) != 0)
+        return nullptr;
+
+    auto driverNs{android_create_namespace("adrenotools-direct-custom", customDriverDir, nullptr,
+                                           ANDROID_NAMESPACE_TYPE_SHARED, nullptr, nullptr)};
+    if (!driverNs)
+        return nullptr;
+
+    /* PanVK is an Android/Bionic ICD. Link the isolated driver namespace to
+     * Android's default namespace so NDK/vendor-visible dependencies such as
+     * libhardware and libnativewindow resolve without involving libvulkan. */
+    if (!linkernsbypass_link_namespace_to_default_all_libs(driverNs))
+        return nullptr;
+
+    return linkernsbypass_namespace_dlopen(customDriverName, dlopenFlags, driverNs);
+}
+
 void *adrenotools_open_libvulkan(int dlopenFlags, int featureFlags, const char *tmpLibDir, const char *hookLibDir, const char *customDriverDir, const char *customDriverName, const char *fileRedirectDir, adrenotools_gpu_mapping *nextGpuMapping) {
     // Bail out if linkernsbypass failed to load, this probably means we're on api < 28
     if (!linkernsbypass_load_status())
