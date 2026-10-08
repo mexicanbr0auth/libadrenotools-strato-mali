@@ -24,6 +24,7 @@ void *adrenotools_open_custom_driver_direct(int dlopenFlags, const char *customD
     if (stat(path.c_str(), &st) != 0)
         return nullptr;
 
+    __android_log_print(ANDROID_LOG_ERROR, "StratoMaliLoader", "stage=create_namespace");
     auto driverNs{android_create_namespace("adrenotools-direct-custom", customDriverDir, nullptr,
                                            ANDROID_NAMESPACE_TYPE_SHARED, nullptr, nullptr)};
     if (!driverNs)
@@ -32,10 +33,14 @@ void *adrenotools_open_custom_driver_direct(int dlopenFlags, const char *customD
     /* PanVK is an Android/Bionic ICD. Link the isolated driver namespace to
      * Android's default namespace so NDK/vendor-visible dependencies such as
      * libhardware and libnativewindow resolve without involving libvulkan. */
+    __android_log_print(ANDROID_LOG_ERROR, "StratoMaliLoader", "stage=link_default ns=%p", driverNs);
     if (!linkernsbypass_link_namespace_to_default_all_libs(driverNs))
         return nullptr;
 
-    return linkernsbypass_namespace_dlopen(customDriverName, dlopenFlags, driverNs);
+    __android_log_print(ANDROID_LOG_ERROR, "StratoMaliLoader", "stage=dlopen name=%s", customDriverName);
+    void *handle = linkernsbypass_namespace_dlopen(customDriverName, dlopenFlags, driverNs);
+    __android_log_print(ANDROID_LOG_ERROR, "StratoMaliLoader", "stage=dlopen_return handle=%p", handle);
+    return handle;
 }
 
 void *adrenotools_open_libvulkan(int dlopenFlags, int featureFlags, const char *tmpLibDir, const char *hookLibDir, const char *customDriverDir, const char *customDriverName, const char *fileRedirectDir, adrenotools_gpu_mapping *nextGpuMapping) {
